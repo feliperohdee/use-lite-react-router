@@ -373,9 +373,3 @@ MIT © [Felipe Rohde](mailto:feliperohdee@gmail.com)
 - Twitter: [@felipe_rohde](https://twitter.com/felipe_rohde)
 - Github: [@feliperohdee](https://github.com/feliperohdee)
 - Email: feliperohdee@gmail.com
-
----
-
-<div align="center">
-  <p>Made with ❤️ by <a href="https://github.com/feliperohde">Felipe Rohde</a></p>
-</div>
