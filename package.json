@@ -2,7 +2,7 @@
 	"name": "use-lite-react-router",
 	"dependencies": {
 		"use-infer": "^1.0.5",
-		"use-request-utils": "^1.0.7"
+		"use-request-utils": "^1.0.8"
 	},
 	"devDependencies": {
 		"@eslint/js": "^9.19.0",
@@ -32,6 +32,7 @@
 		"dist"
 	],
 	"main": "./dist/index.js",
+	"license": "MIT",
 	"peerDependencies": {
 		"react": "^19.0.0",
 		"react-dom": "^19.0.0"

@@ -5,9 +5,6 @@ import { Link, Navigate, Redirect, Route, Routes, useRouter } from '@/router';
 
 const Layout = ({ children, title }: { children: ReactNode; title: string }) => {
 	const { rawPath } = useRouter();
-	const router = useRouter();
-
-	console.log(router);
 
 	return (
 		<div className='container'>
@@ -15,31 +12,31 @@ const Layout = ({ children, title }: { children: ReactNode; title: string }) => 
 				<h1>{title}</h1>
 				<nav>
 					<Link
-						to='/'
 						className={rawPath === '/' ? 'active' : ''}
+						href='/'
 					>
 						Home
 					</Link>
 					<Link
-						to='/dashboard'
 						className={rawPath === '/dashboard' ? 'active' : ''}
+						href='/dashboard'
 					>
 						Dashboard
 					</Link>
 					<Link
-						to='/profile/123'
 						className={rawPath === '/profile/:id' ? 'active' : ''}
+						href='/profile/123'
 					>
 						Profile
 					</Link>
 					<Link
-						to='/settings'
 						className={rawPath === '/settings' ? 'active' : ''}
+						href='/settings'
 					>
 						Settings
 					</Link>
 					<Link
-						to='/not-found'
+						href='/not-found'
 						className={rawPath === '/not-found' ? 'active' : ''}
 					>
 						Not Found
@@ -59,8 +56,8 @@ const Home = () => (
 			<p>Try navigating through the different routes using the links above.</p>
 			<div className='actions'>
 				<Link
-					to='/dashboard'
 					className='button'
+					href='/dashboard'
 				>
 					Go to Dashboard
 				</Link>
@@ -108,8 +105,8 @@ const Profile = () => {
 				</div>
 				<div className='actions'>
 					<Link
-						to='/settings'
 						className='button'
+						href='/settings'
 					>
 						Go to Settings
 					</Link>
@@ -126,8 +123,8 @@ const Settings = () => (
 			<p>This is where you would configure your application settings.</p>
 			<div className='actions'>
 				<Link
-					to='/'
 					className='button'
+					href='/'
 				>
 					Go to Home
 				</Link>
@@ -137,12 +134,7 @@ const Settings = () => (
 );
 
 const LoginRedirect = () => {
-	return (
-		<Navigate
-			to='/dashboard'
-			replace={true}
-		/>
-	);
+	return <Navigate to='/dashboard' />;
 };
 
 const NotFound = () => (
@@ -152,8 +144,8 @@ const NotFound = () => (
 			<p>The page you are looking for doesn't exist or has been moved.</p>
 			<div className='actions'>
 				<Link
-					to='/'
 					className='button'
+					href='/'
 				>
 					Back to Home
 				</Link>
@@ -190,11 +182,11 @@ const Demo = () => {
 				component={NotFound}
 			/>
 			<Redirect
-				from='/old-dashboard'
+				path='/old-dashboard'
 				to='/dashboard'
 			/>
 			<Redirect
-				from='*'
+				path='*'
 				to='/not-found'
 			/>
 		</Routes>

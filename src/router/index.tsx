@@ -1,32 +1,24 @@
 import infer from 'use-infer';
 import Router from 'use-request-utils/router';
 
-import React, { AnchorHTMLAttributes, createContext, useContext, useEffect, useState, ReactNode, ComponentType, useRef } from 'react';
+import routerContext from '@/router/context';
+import useRouter from '@/router/use-router';
 
-type RouterContextType = {
-	back: () => void;
-	id: string;
-	navigate: (path: string, replace?: boolean, state?: Record<string, unknown>) => void;
-	path: string;
-	pathParams: Record<string, unknown>;
-	queryParams: Record<string, string>;
-	rawPath: string;
-	register: (path: string, id: string, component: ComponentType<any>) => void;
-};
+import { AnchorHTMLAttributes, ComponentType, ReactNode, useCallback, useContext, useEffect, useRef, useState } from 'react';
 
 interface LinkProps extends AnchorHTMLAttributes<HTMLAnchorElement> {
-	to: string;
 	external?: boolean;
+	href: string;
 }
 
 type NavigateProps = {
+	children?: never;
 	to: string;
-	replace?: boolean;
-	state?: Record<string, unknown>;
 };
 
 type RedirectProps = {
-	from: string;
+	children?: never;
+	path: string;
 	to: string;
 };
 
@@ -35,180 +27,168 @@ type RoutesProps = {
 };
 
 type RouteProps = {
+	children?: never;
 	component: ComponentType<any>;
 	path: string;
 };
 
-const routerInstance = new Router<{ id: string; component: ComponentType<any> }>();
-const RouterContext = createContext<RouterContextType>({
-	back: () => {},
-	id: '',
-	navigate: () => {},
-	path: '',
-	pathParams: {},
-	rawPath: '',
-	queryParams: {},
-	register: () => {}
-});
-
-let index = 0;
+let routeIndex = 0;
 
 const Routes = ({ children }: RoutesProps) => {
+	const routerInstance = useRef(
+		new Router<{
+			id: string;
+			component: ComponentType<any>;
+		}>()
+	);
 	const [state, setState] = useState<{
 		id: string;
 		path: string;
 		pathParams: Record<string, unknown>;
 		rawPath: string;
 		queryParams: Record<string, string>;
+		scrollPositions: Record<string, number>;
 	}>({
 		id: '',
-		path: '',
+		path: window.location.pathname,
 		pathParams: {},
 		rawPath: '',
-		queryParams: {}
+		queryParams: {},
+		scrollPositions: {}
 	});
 
-	const register = (path: string, id: string, component: ComponentType<any>) => {
-		routerInstance.add('GET', path, { id, component });
-	};
+	const register = useCallback((path: string, id: string, component: ComponentType<any>) => {
+		routerInstance.current.add('GET', path, { id, component });
+	}, []);
 
-	const updateQueryParams = () => {
-		const { search } = window.location;
-
-		if (!search) {
-			setState(state => {
-				return {
-					...state,
-					queryParams: {}
+	const resetScrollPosition = useCallback((path: string) => {
+		setState(state => {
+			return {
+				...state,
+				scrollPositions: {
+					...state.scrollPositions,
+					[path]: 0
 				}
-			});
-			return;
-		}
+			};
+		});
+	}, []);
 
-		const searchParams = new URLSearchParams(search);
+	const saveScrollPosition = useCallback(() => {
+		const path = state.path;
+		const scrollY = window.scrollY;
 
 		setState(state => {
 			return {
 				...state,
-				queryParams: infer(Object.fromEntries(searchParams.entries()))
+				scrollPositions: {
+					...state.scrollPositions,
+					[path]: scrollY
+				}
 			};
 		});
-	};
+	}, [state.path]);
+
+	const handleNavigate = useCallback(
+		(path: string) => {
+			window.history.pushState({}, '', path);
+
+			saveScrollPosition();
+			setState(state => {
+				return { ...state, path };
+			});
+		},
+		[saveScrollPosition]
+	);
 
 	useEffect(() => {
-		const handleLocationChange = () => {
+		const onPopState = () => {
+			const path = window.location.pathname;
+
+			saveScrollPosition();
 			setState(state => {
-				return {
-					...state,
-					path: window.location.pathname
-				};
+				return { ...state, path };
 			});
 		};
 
-		const handleLinkClick = (e: MouseEvent) => {
+		const onLinkClick = (e: MouseEvent) => {
 			const target = e.target as HTMLElement;
 			const anchor = target.closest('a');
 
 			if (anchor && anchor.href && anchor.href.startsWith(window.location.origin) && !anchor.hasAttribute('data-external')) {
 				e.preventDefault();
-				const url = new URL(anchor.href);
 
-				window.history.pushState({}, '', url.toString());
-				setState(state => {
-					return {
-						...state,
-						path: url.pathname
-					};
-				});
+				const { pathname } = new URL(anchor.href);
+				handleNavigate(pathname);
+				resetScrollPosition(pathname);
 			}
 		};
 
-		window.addEventListener('popstate', handleLocationChange);
-		document.addEventListener('click', handleLinkClick);
+		window.addEventListener('popstate', onPopState);
+		document.addEventListener('click', onLinkClick);
 
 		return () => {
-			window.removeEventListener('popstate', handleLocationChange);
-			document.removeEventListener('click', handleLinkClick);
+			window.removeEventListener('popstate', onPopState);
+			document.removeEventListener('click', onLinkClick);
 		};
-	}, []);
+	}, [handleNavigate, resetScrollPosition, saveScrollPosition, state.path]);
 
+	// handle route change
 	useEffect(() => {
-		const matches = routerInstance.match('GET', state.path);
+		const matches = routerInstance.current.match('GET', state.path);
+
+		setTimeout(() => {
+			const y = state.scrollPositions[state.path] || 0;
+
+			window.scrollTo(0, y);
+		}, 0);
 
 		if (matches.length > 0) {
 			const [match] = matches;
+			const { search } = window.location;
+			const searchParams = new URLSearchParams(search);
 
 			setState(state => {
 				return {
 					...state,
 					id: match.handler.id,
 					pathParams: match.pathParams,
+					queryParams: infer(Object.fromEntries(searchParams.entries())),
 					rawPath: match.rawPath
 				};
 			});
-			
-			updateQueryParams();
 		} else {
 			setState(state => {
 				return {
 					...state,
 					id: '',
 					pathParams: {},
-					rawPath: '',
-					queryParams: {}
+					queryParams: {},
+					rawPath: ''
 				};
 			});
 		}
-	}, [state.path]);
-
-	const back = () => {
-		window.history.back();
-	};
-
-	const navigate = (path: string, replace = false) => {
-		if (replace) {
-			window.history.replaceState({}, '', path);
-		} else {
-			window.history.pushState({}, '', path);
-		}
-
-		setState(state => {
-			return {
-				...state,
-				path: path
-			};
-		});
-		updateQueryParams();
-	};
+	}, [resetScrollPosition, state.path, state.scrollPositions]);
 
 	return (
-		<RouterContext.Provider
+		<routerContext.Provider
 			value={{
 				...state,
-				back,
-				navigate,
+				back: () => {
+					window.history.back();
+				},
+				navigate: handleNavigate,
 				register
 			}}
 		>
 			{children}
-		</RouterContext.Provider>
+		</routerContext.Provider>
 	);
 };
 
-const useRouter = () => {
-	const context = useContext(RouterContext);
-
-	if (!context) {
-		throw new Error('useRouter must be used within a Routes');
-	}
-
-	return context;
-};
-
 const Route = ({ path, component: Component }: RouteProps) => {
-	const id = useRef(`route-${index++}`);
+	const id = useRef(`route-${routeIndex++}`);
 	const mounted = useRef(false);
-	const context = useContext(RouterContext);
+	const context = useContext(routerContext);
 
 	useEffect(() => {
 		if (!mounted.current) {
@@ -224,48 +204,33 @@ const Route = ({ path, component: Component }: RouteProps) => {
 	return <Component />;
 };
 
-const Link = ({ to, external, children, ...props }: LinkProps) => {
-	const { navigate } = useRouter();
-
-	const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
-		if (external) return;
-
-		e.preventDefault();
-		navigate(to);
-	};
-
+const Link = ({ href, external, children, ...props }: LinkProps) => {
 	return (
 		<a
-			href={to}
-			onClick={handleClick}
 			{...(external ? { 'data-external': 'true' } : {})}
 			{...props}
+			href={href}
 		>
 			{children}
 		</a>
 	);
 };
 
-const Navigate = ({ to, replace = false }: NavigateProps) => {
+const Navigate = ({ to }: NavigateProps) => {
 	const { navigate } = useRouter();
 
 	useEffect(() => {
-		navigate(to, replace);
-	}, [to, replace, navigate]);
+		navigate(to);
+	}, [to, navigate]);
 
 	return null;
 };
 
-const Redirect = ({ from, to }: RedirectProps) => {
+const Redirect = ({ path, to }: RedirectProps) => {
 	return (
 		<Route
-			path={from}
-			component={() => (
-				<Navigate
-					replace
-					to={to}
-				/>
-			)}
+			path={path}
+			component={() => <Navigate to={to} />}
 		/>
 	);
 };
