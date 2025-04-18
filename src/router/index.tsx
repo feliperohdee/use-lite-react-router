@@ -29,7 +29,7 @@ type RoutesProps = {
 type RouteProps = {
 	children?: never;
 	component: ComponentType<any>;
-	path: string;
+	path: string | string[];
 };
 
 let routeIndex = 0;
@@ -57,8 +57,14 @@ const Routes = ({ children }: RoutesProps) => {
 		scrollPositions: {}
 	});
 
-	const register = useCallback((path: string, id: string, component: ComponentType<any>) => {
-		routerInstance.current.add('GET', path, { id, component });
+	const register = useCallback((path: string | string[], id: string, component: ComponentType<any>) => {
+		if (Array.isArray(path)) {
+			path.forEach(path => {
+				routerInstance.current.add('GET', path, { id, component });
+			});
+		} else {
+			routerInstance.current.add('GET', path, { id, component });
+		}
 	}, []);
 
 	const resetScrollPosition = useCallback((path: string) => {

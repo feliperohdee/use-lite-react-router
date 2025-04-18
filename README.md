@@ -17,6 +17,7 @@
 - 📱 **Browser History API** - Leverages native browser features
 - ⚡ **Zero Dependencies** - No bloat, just what you need
 - 🧠 **Smart Type Inference** - Automatically converts path and query parameters to appropriate types
+- 🔄 **Multiple Route Paths** - Support for array of paths for a single route
 
 ## 📦 Installation
 
@@ -80,12 +81,18 @@ The container component that establishes the routing context.
 
 ### `<Route>`
 
-Defines a route with a path and component.
+Defines a route with a path and component. Supports a single path or an array of paths.
 
 ```jsx
 <Route
 	path='/users/:id'
 	component={UserProfile}
+/>
+
+// Multiple paths for a single route
+<Route
+	path={['/products', '/items']}
+	component={ProductList}
 />
 ```
 
@@ -129,6 +136,8 @@ const UserProfile = () => {
 		<div>
 			<h1>User ID: {pathParams.id}</h1>
 			<button onClick={() => navigate('/dashboard')}>Dashboard</button>
+			<button onClick={() => navigate('/dashboard', true)}>Replace Current History</button>
+			<button onClick={() => navigate('/dashboard', false, { from: 'profile' })}>With State</button>
 			<button onClick={() => back()}>Go Back</button>
 			<p>Page: {queryParams.page}</p>
 		</div>
@@ -195,7 +204,7 @@ const SearchPage = () => {
 };
 ```
 
-### Programmatic Navigation
+### Programmatic Navigation with State and History Control
 
 ```jsx
 const Dashboard = () => {
@@ -209,6 +218,31 @@ const Dashboard = () => {
 		</div>
 	);
 };
+```
+
+### Multiple Paths for a Single Route
+
+```jsx
+<Routes>
+	<Route
+		path='/'
+		component={Home}
+	/>
+	{/* Route that matches multiple paths */}
+	<Route
+		path={['/products', '/items', '/catalog']}
+		component={ProductList}
+	/>
+	<Route
+		path='/about'
+		component={About}
+	/>
+	{/* Must be the last route */}
+	<Redirect
+		path='*'
+		to='/not-found'
+	/>
+</Routes>
 ```
 
 ### Catching 404 Routes
@@ -287,7 +321,7 @@ const Dashboard = () => {
 	return (
 		<Layout title='Dashboard'>
 			<h2>Dashboard</h2>
-			<button onClick={() => navigate('/profile/123')}>Go to Profile</button>
+			<button onClick={() => navigate('/profile/123')}>Go to Profile with State</button>
 		</Layout>
 	);
 };

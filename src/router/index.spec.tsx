@@ -8,16 +8,35 @@ window.scrollTo = scrollToMock;
 const Home = () => {
 	return <div data-testid='home-page'>Home Page</div>;
 };
+
 const About = () => {
 	return <div data-testid='about-page'>About Page</div>;
 };
+
 const User = () => {
 	const { pathParams } = useRouter();
 	return <div data-testid='user-page'>User ID: {pathParams.id as string}</div>;
 };
+
 const Settings = () => {
-	return <div data-testid='settings-page'>Settings Page</div>;
+	return (
+		<Routes>
+			<Route
+				path='/settings'
+				component={() => {
+					return <div data-testid='main-settings-page'>Main Settings</div>;
+				}}
+			/>
+			<Route
+				path='/settings/notifications'
+				component={() => {
+					return <div data-testid='notifications-settings-page'>Notifications Settings</div>;
+				}}
+			/>
+		</Routes>
+	);
 };
+
 const NotFound = () => {
 	return <div data-testid='not-found-page'>Not Found</div>;
 };
@@ -65,7 +84,7 @@ const App = () => (
 			component={User}
 		/>
 		<Route
-			path='/settings'
+			path={['/settings', '/settings/not*']}
 			component={Settings}
 		/>
 		<Route
@@ -210,13 +229,23 @@ describe('/router', () => {
 		});
 	});
 
+	it('should handles nested routes', async () => {
+		window.history.pushState({}, '', '/settings/notifications');
+
+		render(<App />);
+
+		await waitFor(() => {
+			expect(screen.getByTestId('notifications-settings-page')).toBeInTheDocument();
+		});
+	});
+
 	it('should redirects with the Redirect component', async () => {
 		window.history.pushState({}, '', '/old-settings');
 
 		render(<App />);
 
 		await waitFor(() => {
-			expect(screen.getByTestId('settings-page')).toBeInTheDocument();
+			expect(screen.getByTestId('main-settings-page')).toBeInTheDocument();
 		});
 		expect(window.location.pathname).toBe('/settings');
 	});

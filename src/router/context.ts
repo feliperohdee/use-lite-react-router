@@ -8,7 +8,7 @@ type RouterContext = {
 	pathParams: Record<string, unknown>;
 	queryParams: Record<string, string>;
 	rawPath: string;
-	register: (path: string, id: string, component: ComponentType<any>) => void;
+	register: (path: string | string[], id: string, component: ComponentType<any>) => void;
 	scrollPositions: Record<string, number>;
 };
 
