@@ -4,7 +4,18 @@ import Router from 'use-request-utils/router';
 import routerContext from '@/router/context';
 import useRouter from '@/router/use-router';
 
-import { AnchorHTMLAttributes, ComponentType, ReactNode, useCallback, useContext, useEffect, useRef, useState } from 'react';
+import {
+	AnchorHTMLAttributes,
+	ComponentType,
+	forwardRef,
+	ForwardedRef,
+	ReactNode,
+	useCallback,
+	useContext,
+	useEffect,
+	useRef,
+	useState
+} from 'react';
 
 interface LinkProps extends AnchorHTMLAttributes<HTMLAnchorElement> {
 	external?: boolean;
@@ -210,17 +221,18 @@ const Route = ({ path, component: Component }: RouteProps) => {
 	return <Component />;
 };
 
-const Link = ({ href, external, children, ...props }: LinkProps) => {
+const Link = forwardRef(({ href, external, children, ...props }: LinkProps, ref: ForwardedRef<HTMLAnchorElement>) => {
 	return (
 		<a
 			{...(external ? { 'data-external': 'true' } : {})}
 			{...props}
 			href={href}
+			ref={ref}
 		>
 			{children}
 		</a>
 	);
-};
+});
 
 const Navigate = ({ to }: NavigateProps) => {
 	const { navigate } = useRouter();
