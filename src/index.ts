@@ -1,3 +1,3 @@
-import { Link, Navigate, Redirect, Route, Routes, useRouter } from '@/router';
+import { Link, Navigate, NestedRoutes, Redirect, Route, Routes, useRouter } from '@/router';
 
-export { Link, Navigate, Redirect, Route, Routes, useRouter };
+export { Link, Navigate, NestedRoutes, Redirect, Route, Routes, useRouter };

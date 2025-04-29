@@ -243,10 +243,6 @@ const Routes = ({ children, nested = false }: RoutesProps) => {
 	);
 };
 
-const NestedRoutes = ({ children }: Omit<RoutesProps, 'nested'>) => {
-	return <Routes nested>{children}</Routes>;
-};
-
 const Route = ({ path, component: Component }: RouteProps) => {
 	const id = useRef(`route-${globals.routeIndex++}`);
 	const mounted = useRef(false);
@@ -287,6 +283,10 @@ const Navigate = ({ to }: NavigateProps) => {
 	}, [to, navigate]);
 
 	return null;
+};
+
+const NestedRoutes = ({ children }: Omit<RoutesProps, 'nested'>) => {
+	return <Routes nested>{children}</Routes>;
 };
 
 const Redirect = ({ path, to }: RedirectProps) => {
