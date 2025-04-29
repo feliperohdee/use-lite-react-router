@@ -20,8 +20,9 @@ export default defineConfig(env => {
 				entry: './src/index.ts',
 				formats: ['es']
 			},
+			minify: false,
 			rollupOptions: {
-				external: ['react-dom', 'react', 'react/jsxRuntime', 'use-infer'],
+				external: ['react', 'react-dom', 'react/jsx-runtime', 'use-infer'],
 				output: {
 					entryFileNames: '[name].js'
 				}

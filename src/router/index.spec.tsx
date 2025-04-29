@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { Link, Navigate, Redirect, Route, Routes, useRouter } from '@/router';
+
+import { Link, Navigate, NestedRoutes, Redirect, Route, Routes, useRouter } from '@/router';
 
 const scrollToMock = vi.fn();
 window.scrollTo = scrollToMock;
@@ -20,7 +21,7 @@ const User = () => {
 
 const Settings = () => {
 	return (
-		<Routes>
+		<NestedRoutes>
 			<Route
 				path='/settings'
 				component={() => {
@@ -33,7 +34,7 @@ const Settings = () => {
 					return <div data-testid='notifications-settings-page'>Notifications Settings</div>;
 				}}
 			/>
-		</Routes>
+		</NestedRoutes>
 	);
 };
 

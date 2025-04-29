@@ -35,6 +35,7 @@ type RedirectProps = {
 
 type RoutesProps = {
 	children: ReactNode;
+	nested?: boolean;
 };
 
 type RouteProps = {
@@ -43,15 +44,21 @@ type RouteProps = {
 	path: string | string[];
 };
 
-let routeIndex = 0;
+const globals = {
+	// Global flag to track if a top-level Routes component is already mounted
+	// This helps prevent accidentally having multiple top-level Routes instances
+	topLevelRoutesMounted: false,
+	routeIndex: 0
+};
 
-const Routes = ({ children }: RoutesProps) => {
+const Routes = ({ children, nested = false }: RoutesProps) => {
 	const routerInstance = useRef(
 		new Router<{
 			id: string;
 			component: ComponentType<any>;
 		}>()
 	);
+
 	const [state, setState] = useState<{
 		id: string;
 		path: string;
@@ -117,7 +124,39 @@ const Routes = ({ children }: RoutesProps) => {
 		[saveScrollPosition]
 	);
 
+	// When mounting a non-nested Routes component, check if a top-level one already exists
 	useEffect(() => {
+		if (!nested) {
+			if (globals.topLevelRoutesMounted) {
+				const errorMessage =
+					'Multiple instances of top-level Routes detected. ' +
+					'This can cause navigation issues and duplicate event handling. ' +
+					'Use NestedRoutes for nested route definitions instead of Routes.';
+
+				// In development, throw an error to make it very obvious
+				// In production, just log a warning
+				if (process.env.NODE_ENV === 'development') {
+					throw new Error(errorMessage);
+				} else {
+					console.error('WARNING: ' + errorMessage);
+				}
+			}
+
+			globals.topLevelRoutesMounted = true;
+
+			return () => {
+				globals.topLevelRoutesMounted = false;
+			};
+		}
+	}, [nested]);
+
+	// Only set up event listeners for the top-level Routes component
+	useEffect(() => {
+		// Skip setting up listeners for nested Routes
+		if (nested) {
+			return;
+		}
+
 		const onPopState = () => {
 			const path = window.location.pathname;
 
@@ -147,17 +186,19 @@ const Routes = ({ children }: RoutesProps) => {
 			window.removeEventListener('popstate', onPopState);
 			document.removeEventListener('click', onLinkClick);
 		};
-	}, [handleNavigate, resetScrollPosition, saveScrollPosition, state.path]);
+	}, [handleNavigate, nested, resetScrollPosition, saveScrollPosition, state.path]);
 
 	// handle route change
 	useEffect(() => {
 		const matches = routerInstance.current.match('GET', state.path);
 
-		setTimeout(() => {
-			const y = state.scrollPositions[state.path] || 0;
-
-			window.scrollTo(0, y);
-		}, 0);
+		// Only handle scroll restoration in the top-level Routes
+		if (!nested) {
+			setTimeout(() => {
+				const y = state.scrollPositions[state.path] || 0;
+				window.scrollTo(0, y);
+			}, 0);
+		}
 
 		if (matches.length > 0) {
 			const [match] = matches;
@@ -184,7 +225,7 @@ const Routes = ({ children }: RoutesProps) => {
 				};
 			});
 		}
-	}, [resetScrollPosition, state.path, state.scrollPositions]);
+	}, [nested, resetScrollPosition, state.path, state.scrollPositions]);
 
 	return (
 		<routerContext.Provider
@@ -202,8 +243,12 @@ const Routes = ({ children }: RoutesProps) => {
 	);
 };
 
+const NestedRoutes = ({ children }: Omit<RoutesProps, 'nested'>) => {
+	return <Routes nested>{children}</Routes>;
+};
+
 const Route = ({ path, component: Component }: RouteProps) => {
-	const id = useRef(`route-${routeIndex++}`);
+	const id = useRef(`route-${globals.routeIndex++}`);
 	const mounted = useRef(false);
 	const context = useContext(routerContext);
 
@@ -253,4 +298,4 @@ const Redirect = ({ path, to }: RedirectProps) => {
 	);
 };
 
-export { Link, Navigate, Redirect, Route, Routes, useRouter };
+export { globals, Link, Navigate, NestedRoutes, Redirect, Route, Routes, useRouter };
