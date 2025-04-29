@@ -1,5 +1,6 @@
 import infer from 'use-infer';
 import Router from 'use-request-utils/router';
+import usePrev from 'use-good-hooks/use-prev';
 
 import routerContext from '@/router/context';
 import useRouter from '@/router/use-router';
@@ -35,7 +36,16 @@ type RedirectProps = {
 
 type RoutesProps = {
 	children: ReactNode;
-	nested?: boolean;
+};
+
+type RoutesState = {
+	id: string;
+	path: string;
+	pathParams: Record<string, unknown>;
+	rawPath: string;
+	queryParams: Record<string, string>;
+	routes: string[];
+	scrollPositions: Record<string, number>;
 };
 
 type RouteProps = {
@@ -45,13 +55,13 @@ type RouteProps = {
 };
 
 const globals = {
+	routeIndex: 0,
 	// Global flag to track if a top-level Routes component is already mounted
 	// This helps prevent accidentally having multiple top-level Routes instances
-	topLevelRoutesMounted: false,
-	routeIndex: 0
+	topLevelRoutesMounted: false
 };
 
-const Routes = ({ children, nested = false }: RoutesProps) => {
+const Routes = ({ children }: RoutesProps) => {
 	const routerInstance = useRef(
 		new Router<{
 			id: string;
@@ -59,21 +69,17 @@ const Routes = ({ children, nested = false }: RoutesProps) => {
 		}>()
 	);
 
-	const [state, setState] = useState<{
-		id: string;
-		path: string;
-		pathParams: Record<string, unknown>;
-		rawPath: string;
-		queryParams: Record<string, string>;
-		scrollPositions: Record<string, number>;
-	}>({
+	const [state, setState] = useState<RoutesState>({
 		id: '',
 		path: window.location.pathname,
 		pathParams: {},
 		rawPath: '',
 		queryParams: {},
+		routes: [],
 		scrollPositions: {}
 	});
+	const prevPath = usePrev(state.path);
+	const prevRoutes = usePrev(state.routes);
 
 	const register = useCallback((path: string | string[], id: string, component: ComponentType<any>) => {
 		if (Array.isArray(path)) {
@@ -83,6 +89,15 @@ const Routes = ({ children, nested = false }: RoutesProps) => {
 		} else {
 			routerInstance.current.add('GET', path, { id, component });
 		}
+
+		setState(state => {
+			const newRoutes = Array.isArray(path) ? [...state.routes, ...path] : [...state.routes, path];
+
+			return {
+				...state,
+				routes: newRoutes
+			};
+		});
 	}, []);
 
 	const resetScrollPosition = useCallback((path: string) => {
@@ -124,39 +139,30 @@ const Routes = ({ children, nested = false }: RoutesProps) => {
 		[saveScrollPosition]
 	);
 
-	// When mounting a non-nested Routes component, check if a top-level one already exists
+	// avoid many <Routes> components
 	useEffect(() => {
-		if (!nested) {
-			if (globals.topLevelRoutesMounted) {
-				const errorMessage =
-					'Multiple instances of top-level Routes detected. ' +
-					'This can cause navigation issues and duplicate event handling. ' +
-					'Use NestedRoutes for nested route definitions instead of Routes.';
+		if (globals.topLevelRoutesMounted) {
+			const errorMessage =
+				'Multiple instances of top-level Routes detected. ' + 'This can cause navigation issues and duplicate event handling.';
 
-				// In development, throw an error to make it very obvious
-				// In production, just log a warning
-				if (process.env.NODE_ENV === 'development') {
-					throw new Error(errorMessage);
-				} else {
-					console.error('WARNING: ' + errorMessage);
-				}
+			// In development, throw an error to make it very obvious
+			// In production, just log a warning
+			if (process.env.NODE_ENV === 'development') {
+				throw new Error(errorMessage);
+			} else {
+				console.error('WARNING: ' + errorMessage);
 			}
-
-			globals.topLevelRoutesMounted = true;
-
-			return () => {
-				globals.topLevelRoutesMounted = false;
-			};
 		}
-	}, [nested]);
 
-	// Only set up event listeners for the top-level Routes component
+		globals.topLevelRoutesMounted = true;
+
+		return () => {
+			globals.topLevelRoutesMounted = false;
+		};
+	}, []);
+
+	// add event listeners
 	useEffect(() => {
-		// Skip setting up listeners for nested Routes
-		if (nested) {
-			return;
-		}
-
 		const onPopState = () => {
 			const path = window.location.pathname;
 
@@ -186,19 +192,24 @@ const Routes = ({ children, nested = false }: RoutesProps) => {
 			window.removeEventListener('popstate', onPopState);
 			document.removeEventListener('click', onLinkClick);
 		};
-	}, [handleNavigate, nested, resetScrollPosition, saveScrollPosition, state.path]);
+	}, [handleNavigate, resetScrollPosition, saveScrollPosition, state.path]);
 
 	// handle route change
 	useEffect(() => {
+		const samePath = prevPath === state.path;
+		const sameRoutes = prevRoutes?.join(',') === state.routes.join(',');
+
+		if (samePath && sameRoutes) {
+			return;
+		}
+
 		const matches = routerInstance.current.match('GET', state.path);
 
-		// Only handle scroll restoration in the top-level Routes
-		if (!nested) {
-			setTimeout(() => {
-				const y = state.scrollPositions[state.path] || 0;
-				window.scrollTo(0, y);
-			}, 0);
-		}
+		setTimeout(() => {
+			const y = state.scrollPositions[state.path] || 0;
+
+			window.scrollTo(0, y);
+		}, 0);
 
 		if (matches.length > 0) {
 			const [match] = matches;
@@ -225,17 +236,18 @@ const Routes = ({ children, nested = false }: RoutesProps) => {
 				};
 			});
 		}
-	}, [nested, resetScrollPosition, state.path, state.scrollPositions]);
+	}, [resetScrollPosition, prevPath, prevRoutes, state.path, state.routes, state.scrollPositions]);
 
 	return (
 		<routerContext.Provider
 			value={{
-				...state,
 				back: () => {
 					window.history.back();
 				},
 				navigate: handleNavigate,
-				register
+				register,
+				routerInstance: routerInstance.current,
+				state
 			}}
 		>
 			{children}
@@ -255,7 +267,7 @@ const Route = ({ path, component: Component }: RouteProps) => {
 		}
 	}, [Component, path, context]);
 
-	if (context.id !== id.current) {
+	if (context.state.id !== id.current) {
 		return null;
 	}
 
@@ -285,10 +297,6 @@ const Navigate = ({ to }: NavigateProps) => {
 	return null;
 };
 
-const NestedRoutes = ({ children }: Omit<RoutesProps, 'nested'>) => {
-	return <Routes nested>{children}</Routes>;
-};
-
 const Redirect = ({ path, to }: RedirectProps) => {
 	return (
 		<Route
@@ -298,4 +306,5 @@ const Redirect = ({ path, to }: RedirectProps) => {
 	);
 };
 
-export { globals, Link, Navigate, NestedRoutes, Redirect, Route, Routes, useRouter };
+export type { RoutesState };
+export { globals, Link, Navigate, Redirect, Route, Routes, useRouter };

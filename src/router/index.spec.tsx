@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
 
-import { Link, Navigate, NestedRoutes, Redirect, Route, Routes, useRouter } from '@/router';
+import { Link, Navigate, Redirect, Route, Routes, useRouter } from '@/router';
 
 const scrollToMock = vi.fn();
 window.scrollTo = scrollToMock;
@@ -20,22 +20,7 @@ const User = () => {
 };
 
 const Settings = () => {
-	return (
-		<NestedRoutes>
-			<Route
-				path='/settings'
-				component={() => {
-					return <div data-testid='main-settings-page'>Main Settings</div>;
-				}}
-			/>
-			<Route
-				path='/settings/notifications'
-				component={() => {
-					return <div data-testid='notifications-settings-page'>Notifications Settings</div>;
-				}}
-			/>
-		</NestedRoutes>
-	);
+	return <div data-testid='main-settings-page'>Main Settings</div>;
 };
 
 const NotFound = () => {
@@ -85,14 +70,14 @@ const App = () => (
 			component={User}
 		/>
 		<Route
-			path={['/settings', '/settings/not*']}
-			component={Settings}
-		/>
-		<Route
 			path='/redirect-test'
 			component={() => {
 				return <Navigate to='/about' />;
 			}}
+		/>
+		<Route
+			path='/settings'
+			component={Settings}
 		/>
 		<Route
 			path='/not-found'
@@ -227,16 +212,6 @@ describe('/router', () => {
 			const userPage = screen.getByTestId('user-page');
 			expect(userPage).toBeInTheDocument();
 			expect(userPage.textContent).toContain('User ID: 123');
-		});
-	});
-
-	it('should handles nested routes', async () => {
-		window.history.pushState({}, '', '/settings/notifications');
-
-		render(<App />);
-
-		await waitFor(() => {
-			expect(screen.getByTestId('notifications-settings-page')).toBeInTheDocument();
 		});
 	});
 

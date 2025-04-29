@@ -1,7 +1,6 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { Link, Route, Routes, useRouter } from '@/router';
-import routerContext from '@/router/context';
 
 const scrollToMock = vi.fn();
 window.scrollTo = scrollToMock;
@@ -191,39 +190,5 @@ describe('/router/context', () => {
 		});
 
 		expect(window.location.pathname).toBe('/');
-	});
-
-	it('should works with custom context Provider', () => {
-		// Test direct usage of the context provider
-		const customContextValue = {
-			back: vi.fn(),
-			id: 'test-id',
-			navigate: vi.fn(),
-			path: '/custom-path',
-			pathParams: { id: '999' },
-			queryParams: { sort: 'asc' },
-			rawPath: '/custom/:id',
-			register: vi.fn(),
-			scrollPositions: { '/': 0 }
-		};
-
-		const ContextConsumer = () => {
-			const context = useRouter();
-			return (
-				<div data-testid='custom-context'>
-					<div data-testid='custom-path'>{context.path}</div>
-					<div data-testid='custom-id'>{context.id}</div>
-				</div>
-			);
-		};
-
-		render(
-			<routerContext.Provider value={customContextValue}>
-				<ContextConsumer />
-			</routerContext.Provider>
-		);
-
-		expect(screen.getByTestId('custom-path').textContent).toBe('/custom-path');
-		expect(screen.getByTestId('custom-id').textContent).toBe('test-id');
 	});
 });

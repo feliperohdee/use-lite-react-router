@@ -1,27 +1,25 @@
 import { ComponentType, createContext } from 'react';
+import Router from 'use-request-utils/router';
+
+import type { RoutesState } from './index';
 
 type RouterContext = {
 	back: () => void;
-	id: string;
 	navigate: (path: string, replace?: boolean, state?: Record<string, unknown>) => void;
-	path: string;
-	pathParams: Record<string, unknown>;
-	queryParams: Record<string, string>;
-	rawPath: string;
 	register: (path: string | string[], id: string, component: ComponentType<any>) => void;
-	scrollPositions: Record<string, number>;
+	routerInstance: Router<{
+		id: string;
+		component: ComponentType<any>;
+	}>;
+	state: RoutesState;
 };
 
 const routerContext = createContext<RouterContext>({
 	back: () => {},
-	id: '',
 	navigate: () => {},
-	path: '',
-	pathParams: {},
-	rawPath: '',
-	queryParams: {},
 	register: () => {},
-	scrollPositions: {}
+	routerInstance: null!,
+	state: null!
 });
 
 export default routerContext;
