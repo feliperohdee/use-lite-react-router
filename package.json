@@ -3,7 +3,7 @@
 	"dependencies": {
 		"use-good-hooks": "^1.0.22",
 		"use-infer": "^1.0.7",
-		"use-request-utils": "^1.0.64"
+		"use-request-utils": "^1.0.66"
 	},
 	"devDependencies": {
 		"@eslint/js": "^9.19.0",
@@ -45,5 +45,5 @@
 		"npm-publish": "yarn test --run && yarn build && yarn version --patch --no-git-tag-version && yarn publish --non-interactive",
 		"test": "vitest"
 	},
-	"version": "1.0.23"
+	"version": "1.0.24"
 }
