@@ -2,7 +2,7 @@
 	"name": "use-lite-react-router",
 	"dependencies": {
 		"use-good-hooks": "^1.0.22",
-		"use-infer": "^1.0.6",
+		"use-infer": "^1.0.7",
 		"use-request-utils": "^1.0.64"
 	},
 	"devDependencies": {
@@ -45,5 +45,5 @@
 		"npm-publish": "yarn test --run && yarn build && yarn version --patch --no-git-tag-version && yarn publish --non-interactive",
 		"test": "vitest"
 	},
-	"version": "1.0.22"
+	"version": "1.0.23"
 }
