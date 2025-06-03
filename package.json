@@ -2,8 +2,8 @@
 	"name": "use-lite-react-router",
 	"dependencies": {
 		"use-good-hooks": "^1.0.23",
-		"use-infer": "^1.0.7",
-		"use-request-utils": "^1.0.69"
+		"use-infer": "^1.0.8",
+		"use-request-utils": "^1.0.71"
 	},
 	"devDependencies": {
 		"@eslint/js": "^9.19.0",
@@ -45,5 +45,5 @@
 		"npm-publish": "yarn test --run && yarn build && yarn version --patch --no-git-tag-version && yarn publish --non-interactive",
 		"test": "vitest"
 	},
-	"version": "1.0.26"
+	"version": "1.0.28"
 }
