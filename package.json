@@ -1,9 +1,9 @@
 {
 	"name": "use-lite-react-router",
 	"dependencies": {
-		"use-good-hooks": "^1.0.23",
+		"use-good-hooks": "^1.0.24",
 		"use-infer": "^1.0.8",
-		"use-request-utils": "^1.0.71"
+		"use-request-utils": "^1.0.72"
 	},
 	"devDependencies": {
 		"@eslint/js": "^9.19.0",
