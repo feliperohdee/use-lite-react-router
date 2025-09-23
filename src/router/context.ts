@@ -5,7 +5,7 @@ import type { RoutesState } from './index';
 
 type RouterContext = {
 	back: () => void;
-	navigate: (path: string, replace?: boolean, state?: Record<string, unknown>) => void;
+	navigate: (path: string, searchParams?: URLSearchParams) => void;
 	register: (path: string | string[], id: string, component: ComponentType<any>) => void;
 	routerInstance: Router<{
 		id: string;

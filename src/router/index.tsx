@@ -128,8 +128,8 @@ const Routes = ({ children }: RoutesProps) => {
 	}, [state.path]);
 
 	const handleNavigate = useCallback(
-		(path: string) => {
-			window.history.pushState({}, '', path);
+		(path: string, searchParams?: URLSearchParams) => {
+			window.history.pushState({}, '', searchParams && searchParams.size > 0 ? `${path}?${searchParams.toString()}` : path);
 
 			saveScrollPosition();
 			setState(state => {
@@ -176,11 +176,11 @@ const Routes = ({ children }: RoutesProps) => {
 			const target = e.target as HTMLElement;
 			const anchor = target.closest('a');
 
-			if (anchor && anchor.href && anchor.href.startsWith(window.location.origin) && !anchor.hasAttribute('data-external')) {
+			if (anchor?.href.startsWith(window.location.origin) && !anchor.hasAttribute('data-external')) {
 				e.preventDefault();
 
-				const { pathname } = new URL(anchor.href);
-				handleNavigate(pathname);
+				const { pathname, searchParams } = new URL(anchor.href);
+				handleNavigate(pathname, searchParams);
 				resetScrollPosition(pathname);
 			}
 		};

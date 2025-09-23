@@ -21,12 +21,12 @@
 		"react-dom": "^19.1.1",
 		"typescript": "~5.8.2",
 		"typescript-eslint": "^8.22.0",
-		"use-good-hooks": "^1.0.30",
+		"use-good-hooks": "^1.0.37",
 		"use-http-error": "^1.0.6",
 		"use-infer": "^1.0.9",
 		"use-json": "^1.0.1",
 		"use-qs": "^1.0.5",
-		"use-request-utils": "^1.0.81",
+		"use-request-utils": "^1.0.84",
 		"vite": "^6.2.0",
 		"vite-plugin-dts": "^4.5.3",
 		"vitest": "^3.0.7"
@@ -35,12 +35,12 @@
 		"lodash": "^4.17.21",
 		"react": "^19.1.1",
 		"react-dom": "^19.1.1",
-		"use-good-hooks": "^1.0.30",
+		"use-good-hooks": "^1.0.37",
 		"use-http-error": "^1.0.6",
 		"use-infer": "^1.0.9",
 		"use-json": "^1.0.1",
 		"use-qs": "^1.0.5",
-		"use-request-utils": "^1.0.81"
+		"use-request-utils": "^1.0.84"
 	},
 	"files": [
 		"dist"
@@ -55,5 +55,5 @@
 		"test": "vitest --run",
 		"test:watch": "vitest"
 	},
-	"version": "1.0.32"
+	"version": "1.0.33"
 }

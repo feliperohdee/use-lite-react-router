@@ -117,6 +117,12 @@ describe('/router', () => {
 				>
 					About
 				</Link>
+				<Link
+					href='/about?name=test&page=1'
+					data-testid='about-link-with-query-params'
+				>
+					About with query params
+				</Link>
 				<Route
 					path='/'
 					component={Home}
@@ -139,6 +145,17 @@ describe('/router', () => {
 
 		// Verify URL has changed
 		expect(window.location.pathname).toBe('/about');
+		expect(window.location.search).toBe('');
+
+		// Click link with query params and verify navigation
+		fireEvent.click(screen.getByTestId('about-link-with-query-params'));
+		await waitFor(() => {
+			expect(screen.getByTestId('about-page')).toBeInTheDocument();
+		});
+
+		// Verify URL has changed
+		expect(window.location.pathname).toBe('/about');
+		expect(window.location.search).toBe('?name=test&page=1');
 	});
 
 	it('should navigates programmatically using the useRouter hook', async () => {
