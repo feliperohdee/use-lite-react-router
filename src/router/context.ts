@@ -1,7 +1,7 @@
 import { ComponentType, createContext } from 'react';
 import Router from 'use-request-utils/router';
 
-import type { RoutesState } from './index';
+import type { RouteState } from './index';
 
 type RouterContext = {
 	back: () => void;
@@ -11,7 +11,7 @@ type RouterContext = {
 		id: string;
 		component: ComponentType<any>;
 	}>;
-	state: RoutesState;
+	state: RouteState;
 };
 
 const routerContext = createContext<RouterContext>({

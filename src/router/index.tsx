@@ -40,14 +40,16 @@ type RoutesProps = {
 	children: ReactNode;
 };
 
-type RoutesState = {
+type RouteState = {
+	fullPath: string;
 	id: string;
 	path: string;
 	pathParams: Record<string, unknown>;
-	rawPath: string;
 	queryParams: Record<string, string>;
+	rawPath: string;
 	routes: string[];
 	scrollPositions: Record<string, number>;
+	searchParams: URLSearchParams;
 };
 
 type RouteProps = {
@@ -71,14 +73,16 @@ const Routes = ({ children }: RoutesProps) => {
 		}>()
 	);
 
-	const [state, setState] = useState<RoutesState>({
+	const [state, setState] = useState<RouteState>({
+		fullPath: window.location.pathname + window.location.search,
 		id: '',
 		path: window.location.pathname,
 		pathParams: {},
-		rawPath: '',
 		queryParams: {},
+		rawPath: '',
 		routes: [],
-		scrollPositions: {}
+		scrollPositions: {},
+		searchParams: new URLSearchParams(window.location.search)
 	});
 	const prevPath = usePrev(state.path);
 	const prevRoutes = usePrev(state.routes);
@@ -152,7 +156,13 @@ const Routes = ({ children }: RoutesProps) => {
 
 			saveScrollPosition();
 			setState(state => {
-				return { ...state, path: p };
+				const search = sp.size > 0 ? `?${sp.toString()}` : '';
+				return {
+					...state,
+					fullPath: p + search,
+					path: p,
+					searchParams: sp
+				};
 			});
 		},
 		[saveScrollPosition]
@@ -187,7 +197,14 @@ const Routes = ({ children }: RoutesProps) => {
 
 			saveScrollPosition();
 			setState(state => {
-				return { ...state, path };
+				const search = window.location.search;
+				const searchParams = new URLSearchParams(search);
+				return {
+					...state,
+					fullPath: path + search,
+					path,
+					searchParams
+				};
 			});
 		};
 
@@ -236,22 +253,31 @@ const Routes = ({ children }: RoutesProps) => {
 			const searchParams = new URLSearchParams(search);
 
 			setState(state => {
+				const { search } = window.location;
+				const fullPath = state.path + search;
+
 				return {
 					...state,
+					fullPath,
 					id: match.handler.id,
 					pathParams: match.pathParams,
 					queryParams: infer(Object.fromEntries(searchParams.entries())),
-					rawPath: match.rawPath
+					rawPath: match.rawPath,
+					searchParams
 				};
 			});
 		} else {
 			setState(state => {
+				const search = window.location.search;
+				const searchParams = new URLSearchParams(search);
 				return {
 					...state,
+					fullPath: state.path + search,
 					id: '',
 					pathParams: {},
 					queryParams: {},
-					rawPath: ''
+					rawPath: '',
+					searchParams
 				};
 			});
 		}
@@ -330,5 +356,5 @@ const Redirect = ({ fromPath, toPath, toSearchParams }: RedirectProps) => {
 	);
 };
 
-export type { RoutesState };
+export type { RouteState };
 export { globals, Link, Navigate, Redirect, Route, Routes, useRouter };
