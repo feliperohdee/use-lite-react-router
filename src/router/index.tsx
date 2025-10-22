@@ -25,13 +25,15 @@ interface LinkProps extends AnchorHTMLAttributes<HTMLAnchorElement> {
 
 type NavigateProps = {
 	children?: never;
-	to: string;
+	path: string;
+	searchParams?: URLSearchParams;
 };
 
 type RedirectProps = {
 	children?: never;
-	path: string;
-	to: string;
+	fromPath: string;
+	toPath: string;
+	toSearchParams?: URLSearchParams;
 };
 
 type RoutesProps = {
@@ -129,11 +131,28 @@ const Routes = ({ children }: RoutesProps) => {
 
 	const handleNavigate = useCallback(
 		(path: string, searchParams?: URLSearchParams) => {
-			window.history.pushState({}, '', searchParams && searchParams.size > 0 ? `${path}?${searchParams.toString()}` : path);
+			if (!path) {
+				return;
+			}
+
+			// Parse query string from path if it exists
+			const [p, qs] = path.split('?');
+			const sp = qs ? new URLSearchParams(qs) : new URLSearchParams();
+
+			// Merge with provided sp if they exist
+			if (searchParams) {
+				searchParams.forEach((value, key) => {
+					sp.set(key, value);
+				});
+			}
+
+			const url = sp.size > 0 ? `${p}?${sp.toString()}` : p;
+
+			window.history.pushState({}, '', url);
 
 			saveScrollPosition();
 			setState(state => {
-				return { ...state, path };
+				return { ...state, path: p };
 			});
 		},
 		[saveScrollPosition]
@@ -287,21 +306,26 @@ const Link = forwardRef(({ href, external, children, ...props }: LinkProps, ref:
 	);
 });
 
-const Navigate = ({ to }: NavigateProps) => {
+const Navigate = ({ path, searchParams }: NavigateProps) => {
 	const { navigate } = useRouter();
 
 	useEffect(() => {
-		navigate(to);
-	}, [to, navigate]);
+		navigate(path, searchParams);
+	}, [navigate, path, searchParams]);
 
 	return null;
 };
 
-const Redirect = ({ path, to }: RedirectProps) => {
+const Redirect = ({ fromPath, toPath, toSearchParams }: RedirectProps) => {
 	return (
 		<Route
-			path={path}
-			component={() => <Navigate to={to} />}
+			path={fromPath}
+			component={() => (
+				<Navigate
+					path={toPath}
+					searchParams={toSearchParams}
+				/>
+			)}
 		/>
 	);
 };

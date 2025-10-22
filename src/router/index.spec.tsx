@@ -34,19 +34,25 @@ const NavigationTest = () => {
 		<div>
 			<button
 				data-testid='navigate-home'
-				onClick={() => navigate('/')}
+				onClick={() => {
+					navigate('/');
+				}}
 			>
 				Go Home
 			</button>
 			<button
 				data-testid='navigate-about'
-				onClick={() => navigate('/about')}
+				onClick={() => {
+					navigate('/about');
+				}}
 			>
 				Go About
 			</button>
 			<button
 				data-testid='navigate-back'
-				onClick={() => back()}
+				onClick={() => {
+					back();
+				}}
 			>
 				Go Back
 			</button>
@@ -72,7 +78,7 @@ const App = () => (
 		<Route
 			path='/redirect-test'
 			component={() => {
-				return <Navigate to='/about' />;
+				return <Navigate path='/about' />;
 			}}
 		/>
 		<Route
@@ -84,12 +90,12 @@ const App = () => (
 			component={NotFound}
 		/>
 		<Redirect
-			path='/old-settings'
-			to='/settings'
+			fromPath='/old-settings'
+			toPath='/settings'
 		/>
 		<Redirect
-			path='*'
-			to='/not-found'
+			fromPath='*'
+			toPath='/not-found'
 		/>
 	</Routes>
 );
@@ -144,8 +150,8 @@ describe('/router', () => {
 		});
 
 		// Verify URL has changed
-		expect(window.location.pathname).toBe('/about');
-		expect(window.location.search).toBe('');
+		expect(window.location.pathname).toEqual('/about');
+		expect(window.location.search).toEqual('');
 
 		// Click link with query params and verify navigation
 		fireEvent.click(screen.getByTestId('about-link-with-query-params'));
@@ -154,8 +160,174 @@ describe('/router', () => {
 		});
 
 		// Verify URL has changed
-		expect(window.location.pathname).toBe('/about');
-		expect(window.location.search).toBe('?name=test&page=1');
+		expect(window.location.pathname).toEqual('/about');
+		expect(window.location.search).toEqual('?name=test&page=1');
+	});
+
+	it('should navigate with query string in path parameter', async () => {
+		const NavigateTest = () => {
+			const { navigate } = useRouter();
+
+			return (
+				<div>
+					<button
+						data-testid='navigate-with-query'
+						onClick={() => {
+							navigate('/about?name=test&page=1');
+						}}
+					>
+						Navigate with Query
+					</button>
+				</div>
+			);
+		};
+
+		const AboutPage = () => {
+			const { queryParams } = useRouter();
+			return (
+				<div data-testid='about-page'>
+					About Page - Name: {queryParams.name}, Page: {queryParams.page}
+				</div>
+			);
+		};
+
+		render(
+			<Routes>
+				<Route
+					path='/'
+					component={NavigateTest}
+				/>
+				<Route
+					path='/about'
+					component={AboutPage}
+				/>
+			</Routes>
+		);
+
+		// Navigate with query string in path
+		fireEvent.click(screen.getByTestId('navigate-with-query'));
+
+		await waitFor(() => {
+			expect(screen.getByTestId('about-page')).toBeInTheDocument();
+		});
+
+		// Verify URL and query params
+		expect(window.location.pathname).toEqual('/about');
+		expect(window.location.search).toEqual('?name=test&page=1');
+		expect(screen.getByTestId('about-page').textContent).toEqual('About Page - Name: test, Page: 1');
+	});
+
+	it('should navigate with query string in path and additional searchParams', async () => {
+		const NavigateTest = () => {
+			const { navigate } = useRouter();
+
+			return (
+				<div>
+					<button
+						data-testid='navigate-with-merge'
+						onClick={() => {
+							const searchParams = new URLSearchParams({
+								category: 'tech',
+								page: '2' // must override the query string in the path
+							});
+							navigate('/about?name=test&page=1', searchParams);
+						}}
+					>
+						Navigate with Merge
+					</button>
+				</div>
+			);
+		};
+
+		const AboutPage = () => {
+			const { queryParams } = useRouter();
+			return (
+				<div data-testid='about-page'>
+					About Page - Name: {queryParams.name}, Page: {queryParams.page}, Category: {queryParams.category}
+				</div>
+			);
+		};
+
+		render(
+			<Routes>
+				<Route
+					path='/'
+					component={NavigateTest}
+				/>
+				<Route
+					path='/about'
+					component={AboutPage}
+				/>
+			</Routes>
+		);
+
+		// Navigate with query string in path and additional searchParams
+		fireEvent.click(screen.getByTestId('navigate-with-merge'));
+
+		await waitFor(() => {
+			expect(screen.getByTestId('about-page')).toBeInTheDocument();
+		});
+
+		// Verify URL and query params (page should be overridden by searchParams)
+		expect(window.location.pathname).toEqual('/about');
+		expect(window.location.search).toEqual('?name=test&page=2&category=tech');
+		expect(screen.getByTestId('about-page').textContent).toEqual('About Page - Name: test, Page: 2, Category: tech');
+	});
+
+	it('should navigate with only searchParams parameter', async () => {
+		const NavigateTest = () => {
+			const { navigate } = useRouter();
+
+			return (
+				<div>
+					<button
+						data-testid='navigate-with-search-params'
+						onClick={() => {
+							const searchParams = new URLSearchParams();
+							searchParams.set('filter', 'active');
+							searchParams.set('sort', 'name');
+							navigate('/about', searchParams);
+						}}
+					>
+						Navigate with SearchParams
+					</button>
+				</div>
+			);
+		};
+
+		const AboutPage = () => {
+			const { queryParams } = useRouter();
+			return (
+				<div data-testid='about-page'>
+					About Page - Filter: {queryParams.filter}, Sort: {queryParams.sort}
+				</div>
+			);
+		};
+
+		render(
+			<Routes>
+				<Route
+					path='/'
+					component={NavigateTest}
+				/>
+				<Route
+					path='/about'
+					component={AboutPage}
+				/>
+			</Routes>
+		);
+
+		// Navigate with only searchParams
+		fireEvent.click(screen.getByTestId('navigate-with-search-params'));
+
+		await waitFor(() => {
+			expect(screen.getByTestId('about-page')).toBeInTheDocument();
+		});
+
+		// Verify URL and query params
+		expect(window.location.pathname).toEqual('/about');
+		expect(window.location.search).toEqual('?filter=active&sort=name');
+		expect(screen.getByTestId('about-page').textContent).toEqual('About Page - Filter: active, Sort: name');
 	});
 
 	it('should navigates programmatically using the useRouter hook', async () => {
@@ -171,7 +343,7 @@ describe('/router', () => {
 		});
 
 		// Verify URL has changed
-		expect(window.location.pathname).toBe('/about');
+		expect(window.location.pathname).toEqual('/about');
 	});
 
 	it('should handles browser back button (simulated with back() method)', async () => {
@@ -240,7 +412,7 @@ describe('/router', () => {
 		await waitFor(() => {
 			expect(screen.getByTestId('main-settings-page')).toBeInTheDocument();
 		});
-		expect(window.location.pathname).toBe('/settings');
+		expect(window.location.pathname).toEqual('/settings');
 	});
 
 	it('should redirects using the Navigate component', async () => {
@@ -251,7 +423,7 @@ describe('/router', () => {
 		await waitFor(() => {
 			expect(screen.getByTestId('about-page')).toBeInTheDocument();
 		});
-		expect(window.location.pathname).toBe('/about');
+		expect(window.location.pathname).toEqual('/about');
 	});
 
 	it('should redirects to not found for unmatched routes', async () => {
@@ -335,7 +507,7 @@ describe('/router', () => {
 				</Routes>
 			);
 
-			expect(screen.getByTestId('query-params').textContent).toBe('Name: test, Page: 1');
+			expect(screen.getByTestId('query-params').textContent).toEqual('Name: test, Page: 1');
 		});
 
 		it('should throws an error when useRouter is used outside Routes', () => {

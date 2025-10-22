@@ -110,7 +110,7 @@ A navigation component for creating links.
 Performs a programmatic navigation when rendered.
 
 ```jsx
-<Navigate to='/dashboard' />
+<Navigate path='/dashboard' />
 ```
 
 ### `<Redirect>`
@@ -119,8 +119,8 @@ Creates a route that redirects to another path.
 
 ```jsx
 <Redirect
-	path='/old-path'
-	to='/new-path'
+	fromPath='/old-path'
+	toPath='/new-path'
 />
 ```
 
@@ -239,8 +239,8 @@ const Dashboard = () => {
 	/>
 	{/* Must be the last route */}
 	<Redirect
-		path='*'
-		to='/not-found'
+		fromPath='*'
+		toPath='/not-found'
 	/>
 </Routes>
 ```
@@ -263,8 +263,8 @@ const Dashboard = () => {
 	/>
 	{/* Must be the last route */}
 	<Redirect
-		path='*'
-		to='/not-found'
+		fromPath='*'
+		toPath='/not-found'
 	/>
 </Routes>
 ```
@@ -365,8 +365,8 @@ const App = () => {
 			/>
 			{/* Must be the last route */}
 			<Redirect
-				path='*'
-				to='/not-found'
+				fromPath='*'
+				toPath='/not-found'
 			/>
 		</Routes>
 	);
