@@ -5,6 +5,13 @@ import usePrev from 'use-good-hooks/use-prev';
 import routerContext from '@/router/context';
 import useRouter from '@/router/use-router';
 
+const normalizePath = (path: string): string => {
+	if (!path) {
+		return '/';
+	}
+	return path.startsWith('/') ? path : `/${path}`;
+};
+
 import {
 	AnchorHTMLAttributes,
 	ComponentType,
@@ -74,9 +81,9 @@ const Routes = ({ children }: RoutesProps) => {
 	);
 
 	const [state, setState] = useState<RouteState>({
-		fullPath: window.location.pathname + window.location.search,
+		fullPath: normalizePath(window.location.pathname) + window.location.search,
 		id: '',
-		path: window.location.pathname,
+		path: normalizePath(window.location.pathname),
 		pathParams: {},
 		queryParams: {},
 		rawPath: '',
@@ -89,15 +96,21 @@ const Routes = ({ children }: RoutesProps) => {
 
 	const register = useCallback((path: string | string[], id: string, component: ComponentType<any>) => {
 		if (Array.isArray(path)) {
+			path = path.map(p => {
+				return normalizePath(p);
+			});
+
 			path.forEach(path => {
 				routerInstance.current.add('GET', path, { id, component });
 			});
 		} else {
+			path = normalizePath(path);
 			routerInstance.current.add('GET', path, { id, component });
 		}
 
 		setState(state => {
-			const newRoutes = Array.isArray(path) ? [...state.routes, ...path] : [...state.routes, path];
+			const normalizedPaths = Array.isArray(path) ? path.map(p => normalizePath(p)) : [normalizePath(path)];
+			const newRoutes = [...state.routes, ...normalizedPaths];
 
 			return {
 				...state,
@@ -141,6 +154,7 @@ const Routes = ({ children }: RoutesProps) => {
 
 			// Parse query string from path if it exists
 			const [p, qs] = path.split('?');
+			const normalizedPath = normalizePath(p);
 			const sp = qs ? new URLSearchParams(qs) : new URLSearchParams();
 
 			// Merge with provided sp if they exist
@@ -150,7 +164,7 @@ const Routes = ({ children }: RoutesProps) => {
 				});
 			}
 
-			const url = sp.size > 0 ? `${p}?${sp.toString()}` : p;
+			const url = sp.size > 0 ? `${normalizedPath}?${sp.toString()}` : normalizedPath;
 
 			window.history.pushState({}, '', url);
 
@@ -159,8 +173,8 @@ const Routes = ({ children }: RoutesProps) => {
 				const search = sp.size > 0 ? `?${sp.toString()}` : '';
 				return {
 					...state,
-					fullPath: p + search,
-					path: p,
+					fullPath: normalizedPath + search,
+					path: normalizedPath,
 					searchParams: sp
 				};
 			});
@@ -193,7 +207,7 @@ const Routes = ({ children }: RoutesProps) => {
 	// add event listeners
 	useEffect(() => {
 		const onPopState = () => {
-			const path = window.location.pathname;
+			const path = normalizePath(window.location.pathname);
 
 			saveScrollPosition();
 			setState(state => {
@@ -216,8 +230,9 @@ const Routes = ({ children }: RoutesProps) => {
 				e.preventDefault();
 
 				const { pathname, searchParams } = new URL(anchor.href);
-				handleNavigate(pathname, searchParams);
-				resetScrollPosition(pathname);
+				const normalizedPathname = normalizePath(pathname);
+				handleNavigate(normalizedPathname, searchParams);
+				resetScrollPosition(normalizedPathname);
 			}
 		};
 

@@ -479,6 +479,197 @@ describe('/router', () => {
 		});
 	});
 
+	describe('path normalization', () => {
+		it('should navigate with paths without leading slash', async () => {
+			const NavigateTest = () => {
+				const { navigate } = useRouter();
+
+				return (
+					<div>
+						<button
+							data-testid='navigate-without-slash'
+							onClick={() => {
+								navigate('about'); // No leading slash
+							}}
+						>
+							Navigate without slash
+						</button>
+						<button
+							data-testid='navigate-with-slash'
+							onClick={() => {
+								navigate('/about'); // With leading slash
+							}}
+						>
+							Navigate with slash
+						</button>
+					</div>
+				);
+			};
+
+			render(
+				<Routes>
+					<Route
+						path='/'
+						component={NavigateTest}
+					/>
+					<Route
+						path='/about'
+						component={About}
+					/>
+				</Routes>
+			);
+
+			// Test navigation without leading slash
+			fireEvent.click(screen.getByTestId('navigate-without-slash'));
+			await waitFor(() => {
+				expect(screen.getByTestId('about-page')).toBeInTheDocument();
+			});
+
+			expect(window.location.pathname).toEqual('/about');
+
+			// Test navigation with leading slash (navigate back to home first)
+			window.history.pushState({}, '', '/');
+			const popStateEvent = new PopStateEvent('popstate', { state: {} });
+			window.dispatchEvent(popStateEvent);
+
+			await waitFor(() => {
+				expect(screen.getByTestId('navigate-with-slash')).toBeInTheDocument();
+			});
+
+			fireEvent.click(screen.getByTestId('navigate-with-slash'));
+			await waitFor(() => {
+				expect(screen.getByTestId('about-page')).toBeInTheDocument();
+			});
+
+			expect(window.location.pathname).toEqual('/about');
+		});
+
+		it('should register routes with paths without leading slash', async () => {
+			const RouteWithoutSlash = () => {
+				return <div data-testid='route-without-slash'>Route Without Slash</div>;
+			};
+
+			render(
+				<Routes>
+					<Link
+						href='/test-route'
+						data-testid='test-route-link'
+					>
+						Test Route
+					</Link>
+					<Route
+						path='test-route' // No leading slash
+						component={RouteWithoutSlash}
+					/>
+				</Routes>
+			);
+
+			// Navigate to the route
+			fireEvent.click(screen.getByTestId('test-route-link'));
+			await waitFor(() => {
+				expect(screen.getByTestId('route-without-slash')).toBeInTheDocument();
+			});
+
+			expect(window.location.pathname).toEqual('/test-route');
+		});
+
+		it('should navigate with query parameters and paths without leading slash', async () => {
+			const NavigateTest = () => {
+				const { navigate } = useRouter();
+
+				return (
+					<div>
+						<button
+							data-testid='navigate-with-query-no-slash'
+							onClick={() => {
+								navigate('about?name=test&page=1'); // No leading slash with query
+							}}
+						>
+							Navigate with query no slash
+						</button>
+					</div>
+				);
+			};
+
+			const AboutPage = () => {
+				const { queryParams } = useRouter();
+				return (
+					<div data-testid='about-page'>
+						About Page - Name: {queryParams.name}, Page: {queryParams.page}
+					</div>
+				);
+			};
+
+			render(
+				<Routes>
+					<Route
+						path='/'
+						component={NavigateTest}
+					/>
+					<Route
+						path='/about'
+						component={AboutPage}
+					/>
+				</Routes>
+			);
+
+			// Navigate with query string and no leading slash
+			fireEvent.click(screen.getByTestId('navigate-with-query-no-slash'));
+
+			await waitFor(() => {
+				expect(screen.getByTestId('about-page')).toBeInTheDocument();
+			});
+
+			// Verify URL and query params
+			expect(window.location.pathname).toEqual('/about');
+			expect(window.location.search).toEqual('?name=test&page=1');
+			expect(screen.getByTestId('about-page').textContent).toEqual('About Page - Name: test, Page: 1');
+		});
+
+		it('should register array of paths without leading slash', async () => {
+			const MultipleRoutes = () => {
+				return <div data-testid='multiple-routes'>Multiple Routes</div>;
+			};
+
+			render(
+				<Routes>
+					<Link
+						href='/route1'
+						data-testid='route1-link'
+					>
+						Route 1
+					</Link>
+					<Link
+						href='/route2'
+						data-testid='route2-link'
+					>
+						Route 2
+					</Link>
+					<Route
+						path={['route1', 'route2']} // No leading slashes
+						component={MultipleRoutes}
+					/>
+				</Routes>
+			);
+
+			// Test first route
+			fireEvent.click(screen.getByTestId('route1-link'));
+			await waitFor(() => {
+				expect(screen.getByTestId('multiple-routes')).toBeInTheDocument();
+			});
+
+			expect(window.location.pathname).toEqual('/route1');
+
+			// Test second route
+			fireEvent.click(screen.getByTestId('route2-link'));
+			await waitFor(() => {
+				expect(screen.getByTestId('multiple-routes')).toBeInTheDocument();
+			});
+
+			expect(window.location.pathname).toEqual('/route2');
+		});
+	});
+
 	describe('edge-cases', () => {
 		beforeEach(() => {
 			window.history.pushState({}, '', '/');
